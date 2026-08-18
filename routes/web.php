@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GuestPlayerController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -12,7 +13,16 @@ Route::get('/', function () {
         'laravelVersion' => Application::VERSION,
         'phpVersion' => PHP_VERSION,
     ]);
-});
+})->name('home');
+
+Route::get('/play', function () {
+    return Inertia::render('Game/Index', [
+        'pendingRoomCode' => session('pending_room_code'),
+    ]);
+})->name('play');
+
+Route::post('/guest-player', [GuestPlayerController::class, 'store'])->name('guest-player.store');
+Route::delete('/guest-player', [GuestPlayerController::class, 'destroy'])->name('guest-player.destroy');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

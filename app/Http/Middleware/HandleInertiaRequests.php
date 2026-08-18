@@ -34,6 +34,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'guestPlayer' => $request->session()->get('guest_player'),
         ];
     }
 }
