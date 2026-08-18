@@ -13,14 +13,15 @@ Scribble Arena is a realtime multiplayer drawing and guessing game built as a La
 - SQLite for local development
 - PHPUnit
 
-## Phase 1 Scope
+## Roadmap
 
-- Laravel application scaffold
-- Vue/Inertia auth starter kit
-- Tailwind frontend build setup
-- Laravel Boost AI coding guidance and MCP config
-- Local SQLite database and starter migrations
-- Passing frontend build and backend tests
+- [x] Phase 1: Laravel, Vue/Inertia, Tailwind, and Boost setup
+- [ ] Phase 2: App shell, dashboard, and create/join room UI
+- [ ] Phase 3: Game room models, room codes, and lobby flow
+- [ ] Phase 4: Realtime player presence with Laravel Reverb
+- [ ] Phase 5: Drawing canvas with Konva.js
+- [ ] Phase 6: Guessing, scoring, timers, and round logic
+- [ ] Phase 7: Match history, leaderboard, and portfolio polish
 
 ## Local Development
 
