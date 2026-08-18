@@ -1,12 +1,39 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3';
+import InputError from '@/Components/InputError.vue';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
-defineProps({
+const props = defineProps({
     pendingRoomCode: {
         type: String,
         default: null,
     },
 });
+
+const page = usePage();
+const nickname = ref(page.props.guestPlayer?.nickname ?? '');
+
+const createForm = useForm({
+    nickname: nickname.value,
+    max_players: 8,
+    rounds_total: 3,
+    drawing_seconds: 60,
+});
+
+const joinForm = useForm({
+    nickname: nickname.value,
+    room_code: props.pendingRoomCode ?? '',
+});
+
+const submitCreate = () => {
+    createForm.nickname = nickname.value;
+    createForm.post(route('rooms.store'));
+};
+
+const submitJoin = () => {
+    joinForm.nickname = nickname.value;
+    joinForm.post(route('rooms.join'));
+};
 
 const resetGuest = () => {
     router.delete(route('guest-player.destroy'));
@@ -16,135 +43,121 @@ const resetGuest = () => {
 <template>
     <Head title="Play" />
 
-    <main class="min-h-screen bg-slate-950 text-white">
-        <div class="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-            <header class="flex items-center justify-between gap-4">
-                <Link :href="route('home')" class="flex items-center gap-3">
-                    <span class="grid size-10 place-items-center rounded-lg bg-cyan-400 text-lg font-black text-slate-950">
-                        SA
+    <main class="scribble-bg flex min-h-screen items-center justify-center px-4 py-8 text-slate-900">
+        <div class="w-full max-w-sm">
+            <div class="mb-5 text-center">
+                <Link :href="route('home')" class="inline-flex items-center justify-center gap-3">
+                    <span class="grid size-12 place-items-center rounded-full bg-fuchsia-500 text-2xl font-black text-white shadow-md">
+                        S
                     </span>
-                    <span class="text-base font-semibold sm:text-lg">
-                        Scribble Arena
-                    </span>
-                </Link>
-
-                <div class="flex items-center gap-3 text-sm">
-                    <span
-                        v-if="$page.props.guestPlayer"
-                        class="hidden rounded-lg border border-white/10 px-3 py-2 font-medium text-slate-200 sm:inline-flex"
-                    >
-                        {{ $page.props.guestPlayer.nickname }}
-                    </span>
-                    <button
-                        v-if="$page.props.guestPlayer"
-                        class="rounded-lg px-3 py-2 font-medium text-slate-300 transition hover:text-white"
-                        type="button"
-                        @click="resetGuest"
-                    >
-                        Change
-                    </button>
-                    <Link
-                        v-if="$page.props.auth.user"
-                        :href="route('dashboard')"
-                        class="rounded-lg border border-white/10 px-3 py-2 font-medium text-slate-200 transition hover:border-cyan-300 hover:text-white"
-                    >
-                        Dashboard
-                    </Link>
-                </div>
-            </header>
-
-            <section class="grid flex-1 items-center gap-8 py-10 lg:grid-cols-[0.85fr_1.15fr]">
-                <div>
-                    <p class="text-sm font-semibold uppercase tracking-widest text-cyan-300">
-                        Ready area
-                    </p>
-                    <h1 class="mt-3 text-4xl font-black leading-tight sm:text-5xl">
-                        Build the room, then bring in the players.
+                    <h1 class="font-serif text-4xl font-black italic text-white drop-shadow-md">
+                        Scribble
                     </h1>
-                    <p class="mt-5 max-w-xl text-base leading-7 text-slate-300">
-                        This is the first game hub. In Phase 3, these actions will create real rooms, room codes, lobby players, and host controls.
-                    </p>
+                </Link>
+                <div
+                    v-if="$page.props.guestPlayer"
+                    class="mt-3 text-sm font-semibold text-white drop-shadow"
+                >
+                    Playing as {{ $page.props.guestPlayer.nickname }}
+                </div>
+            </div>
+
+            <section class="rounded-md bg-white p-4 shadow-xl">
+                <input
+                    v-model="nickname"
+                    autocomplete="nickname"
+                    class="block w-full rounded border border-gray-300 px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    maxlength="24"
+                    placeholder="Enter your name"
+                    type="text"
+                />
+                <InputError
+                    class="mt-2"
+                    :message="createForm.errors.nickname || joinForm.errors.nickname"
+                />
+
+                <form @submit.prevent="submitCreate">
+                    <div class="mt-3 grid grid-cols-3 gap-2">
+                        <select
+                            v-model="createForm.max_players"
+                            aria-label="Max players"
+                            class="rounded border border-gray-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        >
+                            <option :value="4">4 players</option>
+                            <option :value="6">6 players</option>
+                            <option :value="8">8 players</option>
+                        </select>
+                        <select
+                            v-model="createForm.rounds_total"
+                            aria-label="Rounds"
+                            class="rounded border border-gray-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        >
+                            <option :value="1">1 round</option>
+                            <option :value="3">3 rounds</option>
+                            <option :value="5">5 rounds</option>
+                        </select>
+                        <select
+                            v-model="createForm.drawing_seconds"
+                            aria-label="Timer"
+                            class="rounded border border-gray-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        >
+                            <option :value="45">45 sec</option>
+                            <option :value="60">60 sec</option>
+                            <option :value="90">90 sec</option>
+                        </select>
+                    </div>
+
+                    <button
+                        class="mt-3 w-full rounded bg-blue-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="createForm.processing"
+                        type="submit"
+                    >
+                        Create a room
+                    </button>
+                </form>
+
+                <div class="my-3 flex items-center gap-3 text-sm font-semibold text-gray-500">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span>OR</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
                 </div>
 
-                <div class="grid gap-4 lg:grid-cols-2">
-                    <section class="rounded-lg border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-cyan-950/30">
-                        <div class="flex items-center justify-between gap-3">
-                            <h2 class="text-xl font-bold">
-                                Create room
-                            </h2>
-                            <span class="rounded-full bg-cyan-300 px-3 py-1 text-xs font-bold text-slate-950">
-                                Next
-                            </span>
-                        </div>
-                        <p class="mt-3 text-sm leading-6 text-slate-400">
-                            Create a room code, configure rounds, and wait for friends in the lobby.
-                        </p>
-                        <button
-                            class="mt-6 w-full cursor-not-allowed rounded-lg bg-cyan-300/60 px-4 py-3 text-sm font-black text-slate-950"
-                            disabled
-                            type="button"
-                        >
-                            Coming In Phase 3
-                        </button>
-                    </section>
-
-                    <section class="rounded-lg border border-white/10 bg-white/[0.04] p-5">
-                        <div class="flex items-center justify-between gap-3">
-                            <h2 class="text-xl font-bold">
-                                Join room
-                            </h2>
-                            <span
-                                v-if="pendingRoomCode"
-                                class="rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-slate-950"
-                            >
-                                {{ pendingRoomCode }}
-                            </span>
-                        </div>
-                        <p class="mt-3 text-sm leading-6 text-slate-400">
-                            Join a friend by room code and sync into the realtime lobby.
-                        </p>
-                        <button
-                            class="mt-6 w-full cursor-not-allowed rounded-lg bg-amber-300/60 px-4 py-3 text-sm font-black text-slate-950"
-                            disabled
-                            type="button"
-                        >
-                            Coming In Phase 3
-                        </button>
-                    </section>
-
-                    <section class="rounded-lg border border-white/10 bg-white/[0.04] p-5 lg:col-span-2">
-                        <h2 class="text-xl font-bold">
-                            Player session
-                        </h2>
-                        <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-                            <div class="rounded-lg bg-slate-900 p-4">
-                                <dt class="text-slate-500">
-                                    Nickname
-                                </dt>
-                                <dd class="mt-1 font-bold text-white">
-                                    {{ $page.props.guestPlayer?.nickname ?? 'Not set' }}
-                                </dd>
-                            </div>
-                            <div class="rounded-lg bg-slate-900 p-4">
-                                <dt class="text-slate-500">
-                                    Room code
-                                </dt>
-                                <dd class="mt-1 font-bold text-white">
-                                    {{ pendingRoomCode ?? 'Waiting' }}
-                                </dd>
-                            </div>
-                            <div class="rounded-lg bg-slate-900 p-4">
-                                <dt class="text-slate-500">
-                                    Mode
-                                </dt>
-                                <dd class="mt-1 font-bold text-white">
-                                    Guest play
-                                </dd>
-                            </div>
-                        </dl>
-                    </section>
-                </div>
+                <form class="grid grid-cols-[1fr_auto] gap-2" @submit.prevent="submitJoin">
+                    <input
+                        v-model="joinForm.room_code"
+                        class="block w-full rounded border border-gray-300 px-4 py-3 text-base uppercase tracking-wider text-slate-900 outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        maxlength="6"
+                        placeholder="Enter Room Id"
+                        type="text"
+                    />
+                    <button
+                        class="rounded bg-emerald-500 px-5 py-3 text-base font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="joinForm.processing"
+                        type="submit"
+                    >
+                        Join
+                    </button>
+                    <InputError class="col-span-2" :message="joinForm.errors.room_code" />
+                </form>
             </section>
+
+            <div class="mt-4 flex justify-center gap-4 text-sm text-white drop-shadow">
+                <button
+                    v-if="$page.props.guestPlayer"
+                    class="font-semibold underline decoration-white/50 underline-offset-4"
+                    type="button"
+                    @click="resetGuest"
+                >
+                    Change name
+                </button>
+                <Link
+                    v-if="$page.props.auth.user"
+                    :href="route('dashboard')"
+                    class="font-semibold underline decoration-white/50 underline-offset-4"
+                >
+                    Dashboard
+                </Link>
+            </div>
         </div>
     </main>
 </template>

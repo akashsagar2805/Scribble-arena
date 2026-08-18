@@ -1,6 +1,7 @@
 <script setup>
 import InputError from '@/Components/InputError.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 defineProps({
     canLogin: {
@@ -11,195 +12,147 @@ defineProps({
     },
 });
 
+const nickname = ref('');
+
 const createForm = useForm({
-    nickname: '',
-    intent: 'create',
-    room_code: '',
+    nickname: nickname.value,
+    max_players: 8,
+    rounds_total: 3,
+    drawing_seconds: 60,
 });
 
 const joinForm = useForm({
-    nickname: '',
-    intent: 'join',
+    nickname: nickname.value,
     room_code: '',
 });
 
 const submitCreate = () => {
-    createForm.post(route('guest-player.store'));
+    createForm.nickname = nickname.value;
+    createForm.post(route('rooms.store'));
 };
 
 const submitJoin = () => {
-    joinForm.post(route('guest-player.store'));
+    joinForm.nickname = nickname.value;
+    joinForm.post(route('rooms.join'));
 };
 </script>
 
 <template>
     <Head title="Play" />
 
-    <main class="min-h-screen bg-slate-950 text-white">
-        <div class="mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-            <header class="flex items-center justify-between gap-4">
-                <Link :href="route('home')" class="flex items-center gap-3">
-                    <span class="grid size-10 place-items-center rounded-lg bg-cyan-400 text-lg font-black text-slate-950">
-                        SA
+    <main class="scribble-bg flex min-h-screen items-center justify-center px-4 py-8 text-slate-900">
+        <div class="w-full max-w-sm">
+            <div class="mb-5 text-center">
+                <div class="inline-flex items-center justify-center gap-3">
+                    <span class="grid size-14 place-items-center rounded-full bg-fuchsia-500 text-3xl font-black text-white shadow-md">
+                        S
                     </span>
-                    <span class="text-base font-semibold tracking-normal sm:text-lg">
-                        Scribble Arena
-                    </span>
-                </Link>
-
-                <nav v-if="canLogin" class="flex items-center gap-2 text-sm">
-                    <Link
-                        v-if="$page.props.auth.user"
-                        :href="route('dashboard')"
-                        class="rounded-lg border border-white/10 px-3 py-2 font-medium text-slate-200 transition hover:border-cyan-300 hover:text-white"
-                    >
-                        Dashboard
-                    </Link>
-
-                    <template v-else>
-                        <Link
-                            :href="route('login')"
-                            class="rounded-lg px-3 py-2 font-medium text-slate-300 transition hover:text-white"
-                        >
-                            Log in
-                        </Link>
-                        <Link
-                            v-if="canRegister"
-                            :href="route('register')"
-                            class="rounded-lg border border-white/10 px-3 py-2 font-medium text-slate-200 transition hover:border-cyan-300 hover:text-white"
-                        >
-                            Register
-                        </Link>
-                    </template>
-                </nav>
-            </header>
-
-            <section class="grid flex-1 items-center gap-10 py-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-14">
-                <div class="max-w-2xl">
-                    <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-sm font-medium text-cyan-100">
-                        Realtime drawing party game
-                    </div>
-
-                    <h1 class="text-4xl font-black leading-tight tracking-normal text-white sm:text-5xl lg:text-6xl">
-                        Draw fast. Guess faster.
+                    <h1 class="font-serif text-5xl font-black italic text-white drop-shadow-md">
+                        Scribble
                     </h1>
+                </div>
+            </div>
 
-                    <p class="mt-5 max-w-xl text-base leading-7 text-slate-300 sm:text-lg">
-                        Start as a guest, share a room code, and jump into a live drawing match with friends.
-                    </p>
+            <section class="rounded-md bg-white p-4 shadow-xl">
+                <input
+                    v-model="nickname"
+                    autocomplete="nickname"
+                    class="block w-full rounded border border-gray-300 px-4 py-3 text-base text-slate-900 outline-none transition placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    maxlength="24"
+                    placeholder="Enter your name"
+                    type="text"
+                />
+                <InputError
+                    class="mt-2"
+                    :message="createForm.errors.nickname || joinForm.errors.nickname"
+                />
 
-                    <div class="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-                        <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-                            <div class="text-2xl font-black text-cyan-300">01</div>
-                            <div class="mt-1 text-slate-300">Pick a nickname</div>
-                        </div>
-                        <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-                            <div class="text-2xl font-black text-amber-300">02</div>
-                            <div class="mt-1 text-slate-300">Create a room</div>
-                        </div>
-                        <div class="rounded-lg border border-white/10 bg-white/[0.04] p-4">
-                            <div class="text-2xl font-black text-rose-300">03</div>
-                            <div class="mt-1 text-slate-300">Play live</div>
-                        </div>
+                <form @submit.prevent="submitCreate">
+                    <div class="mt-3 grid grid-cols-3 gap-2">
+                        <select
+                            v-model="createForm.max_players"
+                            aria-label="Max players"
+                            class="rounded border border-gray-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        >
+                            <option :value="4">4 players</option>
+                            <option :value="6">6 players</option>
+                            <option :value="8">8 players</option>
+                        </select>
+                        <select
+                            v-model="createForm.rounds_total"
+                            aria-label="Rounds"
+                            class="rounded border border-gray-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        >
+                            <option :value="1">1 round</option>
+                            <option :value="3">3 rounds</option>
+                            <option :value="5">5 rounds</option>
+                        </select>
+                        <select
+                            v-model="createForm.drawing_seconds"
+                            aria-label="Timer"
+                            class="rounded border border-gray-300 px-2 py-2 text-sm text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                        >
+                            <option :value="45">45 sec</option>
+                            <option :value="60">60 sec</option>
+                            <option :value="90">90 sec</option>
+                        </select>
                     </div>
+
+                    <button
+                        class="mt-3 w-full rounded bg-blue-600 px-4 py-3 text-base font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="createForm.processing"
+                        type="submit"
+                    >
+                        Create a room
+                    </button>
+                </form>
+
+                <div class="my-3 flex items-center gap-3 text-sm font-semibold text-gray-500">
+                    <div class="h-px flex-1 bg-gray-200"></div>
+                    <span>OR</span>
+                    <div class="h-px flex-1 bg-gray-200"></div>
                 </div>
 
-                <div class="grid gap-4">
-                    <form
-                        class="rounded-lg border border-white/10 bg-white/[0.06] p-5 shadow-2xl shadow-cyan-950/40 backdrop-blur"
-                        @submit.prevent="submitCreate"
+                <form class="grid grid-cols-[1fr_auto] gap-2" @submit.prevent="submitJoin">
+                    <input
+                        v-model="joinForm.room_code"
+                        class="block w-full rounded border border-gray-300 px-4 py-3 text-base uppercase tracking-wider text-slate-900 outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+                        maxlength="6"
+                        placeholder="Enter Room Id"
+                        type="text"
+                    />
+                    <button
+                        class="rounded bg-emerald-500 px-5 py-3 text-base font-semibold text-white transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="joinForm.processing"
+                        type="submit"
                     >
-                        <div class="flex items-start justify-between gap-4">
-                            <div>
-                                <h2 class="text-xl font-bold text-white">
-                                    Create a room
-                                </h2>
-                                <p class="mt-1 text-sm text-slate-400">
-                                    Become the host and invite players.
-                                </p>
-                            </div>
-                            <span class="rounded-full bg-cyan-300 px-3 py-1 text-xs font-bold text-slate-950">
-                                Host
-                            </span>
-                        </div>
-
-                        <label class="mt-5 block text-sm font-medium text-slate-200" for="create-nickname">
-                            Nickname
-                        </label>
-                        <input
-                            id="create-nickname"
-                            v-model="createForm.nickname"
-                            autocomplete="nickname"
-                            class="mt-2 block w-full rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-500 focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/30"
-                            maxlength="24"
-                            placeholder="e.g. PixelPro"
-                            type="text"
-                        />
-                        <InputError class="mt-2" :message="createForm.errors.nickname" />
-
-                        <button
-                            class="mt-5 w-full rounded-lg bg-cyan-300 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60"
-                            :disabled="createForm.processing"
-                            type="submit"
-                        >
-                            Create Room
-                        </button>
-                    </form>
-
-                    <form
-                        class="rounded-lg border border-white/10 bg-white/[0.04] p-5 backdrop-blur"
-                        @submit.prevent="submitJoin"
-                    >
-                        <h2 class="text-xl font-bold text-white">
-                            Join with code
-                        </h2>
-                        <p class="mt-1 text-sm text-slate-400">
-                            Have a room code from a friend? Enter it here.
-                        </p>
-
-                        <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-200" for="join-nickname">
-                                    Nickname
-                                </label>
-                                <input
-                                    id="join-nickname"
-                                    v-model="joinForm.nickname"
-                                    autocomplete="nickname"
-                                    class="mt-2 block w-full rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-500 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300/30"
-                                    maxlength="24"
-                                    placeholder="e.g. Sketchy"
-                                    type="text"
-                                />
-                                <InputError class="mt-2" :message="joinForm.errors.nickname" />
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-slate-200" for="room-code">
-                                    Room code
-                                </label>
-                                <input
-                                    id="room-code"
-                                    v-model="joinForm.room_code"
-                                    class="mt-2 block w-full rounded-lg border border-white/10 bg-slate-950/70 px-4 py-3 uppercase tracking-widest text-white placeholder:tracking-normal placeholder:text-slate-500 focus:border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-300/30"
-                                    maxlength="12"
-                                    placeholder="ABCD12"
-                                    type="text"
-                                />
-                                <InputError class="mt-2" :message="joinForm.errors.room_code" />
-                            </div>
-                        </div>
-
-                        <button
-                            class="mt-5 w-full rounded-lg bg-amber-300 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
-                            :disabled="joinForm.processing"
-                            type="submit"
-                        >
-                            Join Room
-                        </button>
-                    </form>
-                </div>
+                        Join
+                    </button>
+                    <InputError class="col-span-2" :message="joinForm.errors.room_code" />
+                </form>
             </section>
+
+            <div class="mt-4 text-center text-white drop-shadow">
+                <Link
+                    v-if="$page.props.auth.user"
+                    :href="route('dashboard')"
+                    class="font-semibold underline decoration-white/50 underline-offset-4"
+                >
+                    Dashboard
+                </Link>
+                <div v-else-if="canLogin" class="flex justify-center gap-4 text-sm">
+                    <Link :href="route('login')" class="font-semibold underline decoration-white/50 underline-offset-4">
+                        Log in
+                    </Link>
+                    <Link
+                        v-if="canRegister"
+                        :href="route('register')"
+                        class="font-semibold underline decoration-white/50 underline-offset-4"
+                    >
+                        Register
+                    </Link>
+                </div>
+            </div>
         </div>
     </main>
 </template>

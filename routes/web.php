@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GameRoomController;
 use App\Http\Controllers\GuestPlayerController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -21,8 +22,11 @@ Route::get('/play', function () {
     ]);
 })->name('play');
 
-Route::post('/guest-player', [GuestPlayerController::class, 'store'])->name('guest-player.store');
 Route::delete('/guest-player', [GuestPlayerController::class, 'destroy'])->name('guest-player.destroy');
+
+Route::post('/rooms', [GameRoomController::class, 'store'])->name('rooms.store');
+Route::post('/rooms/join', [GameRoomController::class, 'join'])->name('rooms.join');
+Route::get('/rooms/{room:code}', [GameRoomController::class, 'show'])->name('rooms.show');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
